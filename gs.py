@@ -2,16 +2,15 @@ import csv
 import sys
 import os
 
-#konfiguracja katalogów: 
 DATA_DIR = "data" 
 CONF_DIR = "conf"
 
 def log(message):
-    """Wypisuje komunikat na konsolę."""
+    #Wypisuje komunikat na konsolę
     print(f"[INFO] {message}")
 
 def load_csv(filename):
-    """Wczytuje plik CSV i usuwa ewentualny BOM."""
+    #Wczytuje plik CSV i usuwa ewentualny BOM.
     path = os.path.join(DATA_DIR, filename)
     log(f"Wczytywanie pliku CSV: {path}")
 
@@ -24,7 +23,7 @@ def load_csv(filename):
     return list(csv.reader(lines, delimiter=';'))
 
 def process_data(data, omitted_lines):
-    """Przetwarza dane z pliku CSV, tworząc strukturę specyfikacji."""
+    #Przetwarza dane z pliku CSV, tworząc strukturę specyfikacji.
     log("Przetwarzanie danych CSV")
     result = {}
 
@@ -46,7 +45,7 @@ def process_data(data, omitted_lines):
     return result
 
 def load_template(filename):
-    """Wczytuje plik konfiguracyjny (TPL)."""
+    #Wczytuje plik konfiguracyjny (TPL).
     path = os.path.join(CONF_DIR, filename)
     log(f"Wczytywanie szablonu: {path}")
 
@@ -58,7 +57,7 @@ def load_template(filename):
         return ""
 
 def extract_header_text(csv_filename, omitted_lines):
-    """Generuje nagłówek H1 na podstawie pierwszych linii pliku CSV."""
+    #Generuje nagłówek H1 na podstawie pierwszych linii pliku CSV.
     log("Generowanie nagłówka H1 z pliku CSV")
     path = os.path.join(DATA_DIR, csv_filename)
 
@@ -75,7 +74,7 @@ def extract_header_text(csv_filename, omitted_lines):
     return ""
 
 def insert_style_and_h1(html_filename, style_content, header_text):
-    """Wstawia zawartość style.tpl i nagłówek H1 po </style> w pliku HTML."""
+    #Wstawia zawartość style.tpl i nagłówek H1 po </style> w pliku HTML.
     log(f"Edytowanie pliku HTML: {html_filename}")
 
     path = os.path.join(DATA_DIR, html_filename)
@@ -99,7 +98,7 @@ def insert_style_and_h1(html_filename, style_content, header_text):
     log(f"Zaktualizowano plik: {html_filename}")
 
 def save_to_file(output_filename, data):
-    """Zapisuje przetworzone dane do pliku HTML."""
+    #Zapisuje przetworzone dane do pliku HTML.
     log(f"Zapisywanie pliku wynikowego: {output_filename}")
 
     header = load_template("header.tpl")
@@ -117,7 +116,7 @@ def save_to_file(output_filename, data):
         file.write(footer + "\n")
 
 def filter_file(input_filename, output_filename, remove_list_filename):
-    """Filtruje linie w pliku HTML na podstawie toRemove.tpl."""
+    #Filtruje linie w pliku HTML na podstawie toRemove.tpl.
     log(f"Filtrowanie pliku: {input_filename}")
 
     input_path = os.path.join(DATA_DIR, input_filename)
@@ -142,7 +141,7 @@ def filter_file(input_filename, output_filename, remove_list_filename):
     log(f"Zapisano przefiltrowany plik: {output_filename}")
 
 def merge_html_files(description_file, specs_file, final_output_file):
-    """Łączy plik opisu i specyfikacji w finalny plik HTML."""
+    #Łączy plik opisu i specyfikacji w finalny plik HTML.S
     log(f"Łączenie plików: {description_file} + {specs_file} → {final_output_file}")
 
     desc_path = os.path.join(DATA_DIR, description_file)
