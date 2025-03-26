@@ -1,13 +1,35 @@
 import csv
 import sys
 import os
+import io
+import datetime
 
-DATA_DIR = "data" 
+DATA_DIR = "data2" 
 CONF_DIR = "conf"
 
+
+
+def list_directories(path):
+    try:
+        directories = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+        return directories if directories else False  # Jeśli brak katalogów, zwracamy False
+    except FileNotFoundError:
+        print(f"Ścieżka '{path}' nie istnieje.")
+        return False
+
 def log(message):
-    #Wypisuje komunikat na konsolę
+    # Pobieranie aktualnej daty i godziny
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+    log_message = f"{timestamp} >> {message}"
+
+    # Wypisanie komunikatu na konsolę
     print(f"[INFO] {message}")
+
+    # Dopisanie komunikatu do pliku log.txt
+    with open("log.txt", "a", encoding="utf-8") as log_file:
+        log_file.write(log_message + "\n")
+
+    
 
 def load_csv(filename):
     #Wczytuje plik CSV i usuwa ewentualny BOM.
@@ -58,7 +80,7 @@ def load_template(filename):
 
 def extract_header_text(csv_filename, omitted_lines):
     #Generuje nagłówek H1 na podstawie pierwszych linii pliku CSV.
-    log("Generowanie nagłówka H1 z pliku CSV")
+    log("Generowanie nagłowka H1 z pliku CSV")
     path = os.path.join(DATA_DIR, csv_filename)
 
     try:
@@ -142,7 +164,7 @@ def filter_file(input_filename, output_filename, remove_list_filename):
 
 def merge_html_files(description_file, specs_file, final_output_file):
     #Łączy plik opisu i specyfikacji w finalny plik HTML.S
-    log(f"Łączenie plików: {description_file} + {specs_file} → {final_output_file}")
+    log(f"Laczenie plików: {description_file} + {specs_file} → {final_output_file}")
 
     desc_path = os.path.join(DATA_DIR, description_file)
     specs_path = os.path.join(DATA_DIR, specs_file)
@@ -152,14 +174,14 @@ def merge_html_files(description_file, specs_file, final_output_file):
         with open(desc_path, 'r', encoding='utf-8') as desc_file:
             description_content = desc_file.read()
     except FileNotFoundError:
-        log(f"UWAGA: Plik {description_file} nie istnieje. Pomijanie łączenia.")
+        log(f"UWAGA: Plik {description_file} nie istnieje. Pomijanie laczenia.")
         return
 
     try:
         with open(specs_path, 'r', encoding='utf-8') as specs_file:
             specs_content = specs_file.read()
     except FileNotFoundError:
-        log(f"UWAGA: Plik {specs_file} nie istnieje. Pomijanie łączenia.")
+        log(f"UWAGA: Plik {specs_file} nie istnieje. Pomijanie laczenia.")
         return
 
     with open(final_path, 'w', encoding='utf-8') as final_file:
@@ -167,28 +189,108 @@ def merge_html_files(description_file, specs_file, final_output_file):
 
     log(f"Wygenerowano plik finalny: {final_output_file}")
 
-def main():
-    if len(sys.argv) < 3:
-        print("Użycie: python script.py <liczba_pomijanych_linii> <nazwa_pliku_csv> [drugi_plik_html]")
+def find_single_file(directory, extension):
+    """Skanuje katalog w poszukiwaniu plików o podanym rozszerzeniu.
+    
+    Zwraca nazwę pliku bez rozszerzenia, jeśli znaleziono dokładnie jeden plik.
+    W przeciwnym razie zwraca False.
+    """
+    files = [f for f in os.listdir(directory) if f.endswith(extension)]
+
+    if len(files) == 1:
+        return os.path.splitext(files[0])[0]  # Zwraca nazwę pliku bez rozszerzenia
+    elif extension == ".html" and len(files) == 0:
+        with io.open(os.path.join(directory, 'no_desc.html'), 'w', encoding='utf-8') as file:
+            file.write('')
+        log(f"Stworzono pusty plik opisu, gdyz takowego brakowalo")
+        return 'no_desc'
+    return False
+
+def remove_temps (filename,second_filename):
+    try: 
+        os.remove(DATA_DIR + "/" + filename + ".html")
+        if second_filename == "no_desc":
+           os.remove(DATA_DIR + "/" + second_filename + ".html")
+        os.remove(DATA_DIR + "/" + second_filename + "_res.html")
+        log(f"Temp files deleted.")
+    except FileNotFoundError:
+        log(f"No temp files found.")
+
+def how_to_use():
+    print('Użycie:')
+    print('python gs.py [omitted_lines] >> no dir & final file')
+    print('python gs.py [omitted_lines] [csv] >> no dir & only spec')
+    print('python gs.py >> w przypadku katalogów')
+
+def main(omitted_lines = False, katalog = False):
+    if (katalog):
+        global DATA_DIR
+        temp = DATA_DIR
+        DATA_DIR = DATA_DIR + "/" + katalog
+    #print(sys.argv)
+    if len(sys.argv) >= 4 or omitted_lines == False:
+        #if omitted_lines == False:
+            #print("Użycie: python gs.py <liczba_pomijanych_linii> [nazwa_pliku_csv] [drugi_plik_html]")
+        how_to_use()
         sys.exit(1)
+    #else:
+    #    omitted_lines = int(sys.argv[1])
 
-    omitted_lines = int(sys.argv[1])
-    filename = sys.argv[2]
-
+    if len(sys.argv) == 2 or katalog:
+        filename = find_single_file(DATA_DIR, ".csv")
+        if filename == False:
+            log ("Nieprawidlowa ilosc plików .csv w " + DATA_DIR)
+            return #sys.exit(1)
+        second_filename = find_single_file(DATA_DIR, ".html")
+        if second_filename == False:
+            log ("Nieprawidlowa ilosc plików .html " + DATA_DIR)
+            return #sys.exit(1)      
+    
+    if len(sys.argv) == 3:
+        filename = sys.argv[2]
+    if len(sys.argv) == 4:
+       second_filename = sys.argv[3]
+    #print(sys.argv)
+    #print (filename)
     data = load_csv(filename + ".csv")
     processed_data = process_data(data, omitted_lines)
 
     save_to_file(filename + ".html", processed_data)
 
-    if len(sys.argv) == 4:
-        second_filename = sys.argv[3]
+    if len(sys.argv) == 4 or len(sys.argv) == 2 or katalog:
+        #second_filename = sys.argv[3]
         filter_file(second_filename + ".html", second_filename + "_res.html", "toRemove.tpl")
 
         style_content = load_template("style.tpl")
         header_text = extract_header_text(filename + ".csv", omitted_lines)
         insert_style_and_h1(second_filename + "_res.html", style_content, header_text)
 
-        merge_html_files(second_filename + "_res.html", filename + ".html", second_filename + "_final.html")
+        merge_html_files(second_filename + "_res.html", filename + ".html", second_filename + "_shopify.html")
 
+        remove_temps (filename,second_filename)
+        
+        if katalog != False:
+            #print (temp, katalog, DATA_DIR)
+            DATA_DIR=temp
+
+
+
+
+
+
+katalogi = list_directories(DATA_DIR)
+print("ąść")
 if __name__ == "__main__":
-    main()
+    if katalogi:  # Jeśli lista ma elementy, wykonujemy pętlę dla każdego elementu
+        for katalog in katalogi:
+            log(f"\nPRZETWARZAM PRODUKT: {katalog}")
+            temp = DATA_DIR
+            main(2, katalog)
+            DATA_DIR = temp
+    else:  # Jeśli lista jest pusta lub False, wykonujemy tylko raz
+        if len(sys.argv) == 1:
+            log ('Brak pomijanych linii.')
+            how_to_use()
+            sys.exit(1)
+        log(f"PRZETWARZAM PRODUKT:")
+        main (int(sys.argv[1]), katalogi)
