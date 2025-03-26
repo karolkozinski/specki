@@ -1,2 +1,5 @@
 N/A
-n/A
+n/a
+Na
+NA
+na

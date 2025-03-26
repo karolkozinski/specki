@@ -6,10 +6,11 @@ Do prawidłowego działania potrzeba:
 1. Plik specyfikacji
 2. Plik opisu
 
-Program uruchamiamy komendą:
-python3 gs.py [liczba_naglowkowa] [nazwa pliku specyfikacji] [nazwa pliku opisu]
+Użycie:
+python gs.py [omitted_lines] >> no dir & final file
+python gs.py [omitted_lines] [csv] >> no dir & only spec
+python gs.py >> w przypadku katalogów
 
-Oprogramowanie zadziała bez 3 parametru, ale wygeneruje czystą specyfikację, bez .css, aby to obejść, wystarczy stworzyć pusty plik opisuspecyfikacji
 Core softu wykonuje następujące działania:
 Wczytaj data.csv do listy data
 Obrób listę data:
@@ -22,5 +23,5 @@ Potem dokleja zawartość header.tpl i footer.tpl
 Oprogramowanie generuje nagłowek z pierwszych [liczba_naglowkowa] linijek 
 Następnie oprogramowanie obrabia plik [opis.html], usuwając linijki z toRemove.tpl, po ostatnim </style> wstawia zawartość header2.tpl.
 Ostatnią rzeczą jaką soft robi to złączenie wszystkiego w plik [opis]_final.html.
-Pliki tymczasowe nie są czyszczone.
+Pliki tymczasowe są czyszczone.
 hidden.py [nazwa_pliku_html_bez_rozszerzenia] do kazdej klasy spec_line dodaje klasę N jeśli feature jest w hidden.tpl lub jest puste.

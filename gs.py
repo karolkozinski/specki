@@ -3,8 +3,11 @@ import sys
 import os
 import io
 import datetime
+import re
 
-DATA_DIR = "data2" 
+
+
+DATA_DIR = "data" 
 CONF_DIR = "conf"
 
 
@@ -212,15 +215,64 @@ def remove_temps (filename,second_filename):
         if second_filename == "no_desc":
            os.remove(DATA_DIR + "/" + second_filename + ".html")
         os.remove(DATA_DIR + "/" + second_filename + "_res.html")
-        log(f"Temp files deleted.")
+        os.remove(DATA_DIR + "/" + second_filename + "_beforestripping.html")
+        log(f"Temporary files deleted.")
     except FileNotFoundError:
-        log(f"No temp files found.")
+        log("Problems with deleting temporary files")
 
 def how_to_use():
     print('Użycie:')
     print('python gs.py [omitted_lines] >> no dir & final file')
     print('python gs.py [omitted_lines] [csv] >> no dir & only spec')
     print('python gs.py >> w przypadku katalogów')
+
+#hidden.py import
+
+def load_hidden_values(filename):
+    """Wczytuje wartości do ukrycia z pliku hidden.tpl."""
+    path = os.path.join("conf", filename)
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            return {line.strip() for line in file if line.strip()}
+    except FileNotFoundError:
+        log(f"UWAGA: Plik {filename} nie istnieje.")
+        return set()
+
+def modify_html(input_filename, output_filename, hidden_values):
+    """Dodaje klasę 'N' do spec_line, jeśli wartość value_spec jest pusta lub znajduje się w hidden.tpl."""
+    global DATA_DIR
+    input_path = os.path.join(DATA_DIR, input_filename)
+    output_path = os.path.join(DATA_DIR, output_filename)
+    
+    try:
+        with open(input_path, "r", encoding="utf-8") as file:
+            html_content = file.read()
+    except FileNotFoundError:
+        log(f"UWAGA: Plik {input_filename} nie istnieje.")
+        return
+    
+    def replace_match(match):
+        spec_line, feature, value = match.groups()
+        clean_value = re.sub(r"<br>.*", "", value).strip()  # Pobiera pierwszą linię wartości
+        
+        if not clean_value or clean_value in hidden_values:
+            return spec_line.replace("spec_line", "spec_line N")
+        return spec_line
+    
+    updated_html = re.sub(
+        r"(<div class=\"spec_line\">\s*<div class=\"feature_spec\">(.*?)</div>\s*<div class=\"value_spec\">(.*?)</div>\s*</div>)",
+        replace_match,
+        html_content,
+        flags=re.DOTALL
+    )
+    
+    with open(output_path, "w", encoding="utf-8") as file:
+        file.write(updated_html)
+    
+    log(f"Zapisano zmodyfikowany plik: {output_filename}")
+
+
+
 
 def main(omitted_lines = False, katalog = False):
     if (katalog):
@@ -265,7 +317,16 @@ def main(omitted_lines = False, katalog = False):
         header_text = extract_header_text(filename + ".csv", omitted_lines)
         insert_style_and_h1(second_filename + "_res.html", style_content, header_text)
 
-        merge_html_files(second_filename + "_res.html", filename + ".html", second_filename + "_shopify.html")
+        merge_html_files(second_filename + "_res.html", filename + ".html", second_filename + "_beforestripping.html")
+
+        #hidden.py incorporation
+        filename2 = second_filename + "_beforestripping.html"
+        output_filename = second_filename + "_shopify.html"
+        hidden_values = load_hidden_values("hidden.tpl")
+        modify_html(filename2, output_filename, hidden_values)
+
+
+
 
         remove_temps (filename,second_filename)
         
@@ -279,7 +340,7 @@ def main(omitted_lines = False, katalog = False):
 
 
 katalogi = list_directories(DATA_DIR)
-print("ąść")
+#print("ąść")
 if __name__ == "__main__":
     if katalogi:  # Jeśli lista ma elementy, wykonujemy pętlę dla każdego elementu
         for katalog in katalogi:
