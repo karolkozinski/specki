@@ -9,7 +9,7 @@ Do prawidłowego działania potrzeba:
 Użycie:
 python gs.py [omitted_lines] >> no dir & final file
 python gs.py [omitted_lines] [csv] >> no dir & only spec
-python gs.py >> w przypadku katalogów
+python gs.py >> gs >> when dirs, header needs to be a single line
 
 Core softu wykonuje następujące działania:
 Wczytaj data.csv do listy data

@@ -6,19 +6,20 @@ import datetime
 import re
 
 
-
+#config
 DATA_DIR = "data" 
 CONF_DIR = "conf"
 
 
-
+#sprawdzanie czy w katalogu DATA_DIR są jakieś podkatalogi
 def list_directories(path):
     try:
         directories = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         return directories if directories else False  # Jeśli brak katalogów, zwracamy False
     except FileNotFoundError:
-        print(f"Ścieżka '{path}' nie istnieje.")
+        log(f"Ścieżka '{path}' nie istnieje.")
         return False
+
 
 def log(message):
     # Pobieranie aktualnej daty i godziny
@@ -31,8 +32,7 @@ def log(message):
     # Dopisanie komunikatu do pliku log.txt
     with open("log.txt", "a", encoding="utf-8") as log_file:
         log_file.write(log_message + "\n")
-
-    
+   
 
 def load_csv(filename):
     #Wczytuje plik CSV i usuwa ewentualny BOM.
@@ -46,6 +46,7 @@ def load_csv(filename):
         lines[0] = lines[0][1:]
 
     return list(csv.reader(lines, delimiter=';'))
+
 
 def process_data(data, omitted_lines):
     #Przetwarza dane z pliku CSV, tworząc strukturę specyfikacji.
@@ -69,8 +70,9 @@ def process_data(data, omitted_lines):
 
     return result
 
+
 def load_template(filename):
-    #Wczytuje plik konfiguracyjny (TPL).
+    #Wczytuje plik konfiguracyjny (.tpl).
     path = os.path.join(CONF_DIR, filename)
     log(f"Wczytywanie szablonu: {path}")
 
@@ -119,7 +121,6 @@ def insert_style_and_h1(html_filename, style_content, header_text):
 
     with open(path, 'w', encoding='utf-8') as file:
         file.write(updated_html)
-
     log(f"Zaktualizowano plik: {html_filename}")
 
 def save_to_file(output_filename, data):
@@ -139,6 +140,7 @@ def save_to_file(output_filename, data):
             file.write(f'<div class="spec_line">\n  <div class="feature_spec">{feature}</div>\n  <div class="value_spec">{formatted_value}</div>\n</div>\n')
 
         file.write(footer + "\n")
+        
 
 def filter_file(input_filename, output_filename, remove_list_filename):
     #Filtruje linie w pliku HTML na podstawie toRemove.tpl.
@@ -190,14 +192,13 @@ def merge_html_files(description_file, specs_file, final_output_file):
     with open(final_path, 'w', encoding='utf-8') as final_file:
         final_file.write(description_content + "\n" + specs_content)
 
-    log(f"Wygenerowano plik finalny: {final_output_file}")
+    log(f"Wygenerowano plik zlaczony: {final_output_file}")
 
 def find_single_file(directory, extension):
-    """Skanuje katalog w poszukiwaniu plików o podanym rozszerzeniu.
+    #Skanuje katalog w poszukiwaniu plików o podanym rozszerzeniu.
+    #Zwraca nazwę pliku bez rozszerzenia, jeśli znaleziono dokładnie jeden plik.
+    #W przeciwnym razie zwraca False.
     
-    Zwraca nazwę pliku bez rozszerzenia, jeśli znaleziono dokładnie jeden plik.
-    W przeciwnym razie zwraca False.
-    """
     files = [f for f in os.listdir(directory) if f.endswith(extension)]
 
     if len(files) == 1:
@@ -221,13 +222,13 @@ def remove_temps (filename,second_filename):
         log("Problems with deleting temporary files")
 
 def how_to_use():
-    print('Użycie:')
-    print('python gs.py [omitted_lines] >> no dir & final file')
-    print('python gs.py [omitted_lines] [csv] >> no dir & only spec')
-    print('python gs.py >> w przypadku katalogów')
+    print('Usage:')
+    print('>gs [omitted_lines] >> no dirs, output >> _shopify.html')
+    print('>gs [omitted_lines] [csv] >> no dirs, output spec >> [csv].html')
+    print('>gs >> when dirs; header a single line, output: _shopify.html in dirs')
 
-#hidden.py import
 
+#hidden.py import BEGIN
 def load_hidden_values(filename):
     """Wczytuje wartości do ukrycia z pliku hidden.tpl."""
     path = os.path.join("conf", filename)
@@ -238,8 +239,17 @@ def load_hidden_values(filename):
         log(f"UWAGA: Plik {filename} nie istnieje.")
         return set()
 
+
+def replace_match(match, hidden_values):
+    spec_line, feature, value = match.groups()
+    clean_value = re.sub(r"<br>.*", "", value).strip()  # Pobiera pierwszą linię wartości
+    
+    if not clean_value or clean_value in hidden_values:
+        return spec_line.replace("spec_line", "spec_line N")
+    return spec_line
+
+
 def modify_html(input_filename, output_filename, hidden_values):
-    """Dodaje klasę 'N' do spec_line, jeśli wartość value_spec jest pusta lub znajduje się w hidden.tpl."""
     global DATA_DIR
     input_path = os.path.join(DATA_DIR, input_filename)
     output_path = os.path.join(DATA_DIR, output_filename)
@@ -251,17 +261,9 @@ def modify_html(input_filename, output_filename, hidden_values):
         log(f"UWAGA: Plik {input_filename} nie istnieje.")
         return
     
-    def replace_match(match):
-        spec_line, feature, value = match.groups()
-        clean_value = re.sub(r"<br>.*", "", value).strip()  # Pobiera pierwszą linię wartości
-        
-        if not clean_value or clean_value in hidden_values:
-            return spec_line.replace("spec_line", "spec_line N")
-        return spec_line
-    
     updated_html = re.sub(
         r"(<div class=\"spec_line\">\s*<div class=\"feature_spec\">(.*?)</div>\s*<div class=\"value_spec\">(.*?)</div>\s*</div>)",
-        replace_match,
+        lambda match: replace_match(match, hidden_values),
         html_content,
         flags=re.DOTALL
     )
@@ -269,9 +271,8 @@ def modify_html(input_filename, output_filename, hidden_values):
     with open(output_path, "w", encoding="utf-8") as file:
         file.write(updated_html)
     
-    log(f"Zapisano zmodyfikowany plik: {output_filename}")
-
-
+    log(f"Zapisano przefiltrowany plik finalny: {output_filename}")
+#hidden.py import END
 
 
 def main(omitted_lines = False, katalog = False):
@@ -279,79 +280,67 @@ def main(omitted_lines = False, katalog = False):
         global DATA_DIR
         temp = DATA_DIR
         DATA_DIR = DATA_DIR + "/" + katalog
-    #print(sys.argv)
     if len(sys.argv) >= 4 or omitted_lines == False:
-        #if omitted_lines == False:
-            #print("Użycie: python gs.py <liczba_pomijanych_linii> [nazwa_pliku_csv] [drugi_plik_html]")
         how_to_use()
         sys.exit(1)
-    #else:
-    #    omitted_lines = int(sys.argv[1])
-
     if len(sys.argv) == 2 or katalog:
         filename = find_single_file(DATA_DIR, ".csv")
         if filename == False:
-            log ("Nieprawidlowa ilosc plików .csv w " + DATA_DIR)
-            return #sys.exit(1)
+            log ("Nieprawidlowa ilosc plików .csv w katalogu: " + DATA_DIR)
+            return
         second_filename = find_single_file(DATA_DIR, ".html")
         if second_filename == False:
-            log ("Nieprawidlowa ilosc plików .html " + DATA_DIR)
-            return #sys.exit(1)      
-    
+            log ("Nieprawidlowa ilosc plików .html w katalogu:" + DATA_DIR)
+            return
     if len(sys.argv) == 3:
         filename = sys.argv[2]
     if len(sys.argv) == 4:
        second_filename = sys.argv[3]
-    #print(sys.argv)
-    #print (filename)
     data = load_csv(filename + ".csv")
     processed_data = process_data(data, omitted_lines)
 
     save_to_file(filename + ".html", processed_data)
 
     if len(sys.argv) == 4 or len(sys.argv) == 2 or katalog:
-        #second_filename = sys.argv[3]
         filter_file(second_filename + ".html", second_filename + "_res.html", "toRemove.tpl")
-
         style_content = load_template("style.tpl")
         header_text = extract_header_text(filename + ".csv", omitted_lines)
         insert_style_and_h1(second_filename + "_res.html", style_content, header_text)
-
         merge_html_files(second_filename + "_res.html", filename + ".html", second_filename + "_beforestripping.html")
-
         #hidden.py incorporation
         filename2 = second_filename + "_beforestripping.html"
         output_filename = second_filename + "_shopify.html"
         hidden_values = load_hidden_values("hidden.tpl")
         modify_html(filename2, output_filename, hidden_values)
-
-
-
-
         remove_temps (filename,second_filename)
         
-        if katalog != False:
-            #print (temp, katalog, DATA_DIR)
+        if katalog != False:            
             DATA_DIR=temp
 
+if len(sys.argv) == 2 and sys.argv[1] == "help":
+    how_to_use()
+    sys.exit(1)
 
-
-
-
+if len(sys.argv) > 1:
+    try:
+        omittedLines = int(sys.argv[1])
+    except ValueError:
+        log(f"BŁĄD: '{sys.argv[1]}' nie jest liczbą całkowitą!")
+        how_to_use()
+        sys.exit(1)
 
 katalogi = list_directories(DATA_DIR)
-#print("ąść")
 if __name__ == "__main__":
     if katalogi:  # Jeśli lista ma elementy, wykonujemy pętlę dla każdego elementu
         for katalog in katalogi:
             log(f"\nPRZETWARZAM PRODUKT: {katalog}")
             temp = DATA_DIR
-            main(2, katalog)
+            main(1, katalog)
             DATA_DIR = temp
     else:  # Jeśli lista jest pusta lub False, wykonujemy tylko raz
         if len(sys.argv) == 1:
             log ('Brak pomijanych linii.')
             how_to_use()
             sys.exit(1)
-        log(f"PRZETWARZAM PRODUKT:")
-        main (int(sys.argv[1]), katalogi)
+        log(f"PRZETWARZAM POJEDYNCZY PRODUKT:")
+        main (omittedLines, katalogi)
