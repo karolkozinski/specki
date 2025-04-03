@@ -11,6 +11,8 @@ python gs.py [omitted_lines] >> no dir & final file
 python gs.py [omitted_lines] [csv] >> no dir & only spec
 python gs.py >> gs >> when dirs, header needs to be a single line
 
+Właściwie użycie (po skompilowaniu) to uruchomienie pliku gs.exe z odpowiednio sformatowanymi i wypełnionymi katalogami w /data oraz /hidden i /conf.
+
 Core softu wykonuje następujące działania:
 Wczytaj data.csv do listy data
 Obrób listę data:
