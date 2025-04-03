@@ -17,7 +17,7 @@ def list_directories(path):
         directories = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
         return directories if directories else False  # Jeśli brak katalogów, zwracamy False
     except FileNotFoundError:
-        log(f"Ścieżka '{path}' nie istnieje.")
+        log(f"Path '{path}' non existant.")
         return False
 
 
@@ -37,7 +37,7 @@ def log(message):
 def load_csv(filename):
     #Wczytuje plik CSV i usuwa ewentualny BOM.
     path = os.path.join(DATA_DIR, filename)
-    log(f"Wczytywanie pliku CSV: {path}")
+    log(f"Loading CSV file: {path}")
 
     with open(path, newline='', encoding='utf-8') as file:
         lines = file.readlines()
@@ -50,7 +50,7 @@ def load_csv(filename):
 
 def process_data(data, omitted_lines):
     #Przetwarza dane z pliku CSV, tworząc strukturę specyfikacji.
-    log("Przetwarzanie danych CSV")
+    log("Processing CSV data.")
     result = {}
 
     for row in data[omitted_lines:]:
@@ -74,18 +74,18 @@ def process_data(data, omitted_lines):
 def load_template(filename):
     #Wczytuje plik konfiguracyjny (.tpl).
     path = os.path.join(CONF_DIR, filename)
-    log(f"Wczytywanie szablonu: {path}")
+    log(f"Uploading template: {path}")
 
     try:
         with open(path, 'r', encoding='utf-8') as file:
             return file.read()
     except FileNotFoundError:
-        log(f"UWAGA: Plik {filename} nie istnieje.")
+        log(f"NOTE: File {filename} do not exist.")
         return ""
 
 def extract_header_text(csv_filename, omitted_lines):
     #Generuje nagłówek H1 na podstawie pierwszych linii pliku CSV.
-    log("Generowanie nagłowka H1 z pliku CSV")
+    log("Generating headline H1 from CSV file.")
     path = os.path.join(DATA_DIR, csv_filename)
 
     try:
@@ -96,13 +96,13 @@ def extract_header_text(csv_filename, omitted_lines):
             if header_lines:
                 return '<h1 class="naglowek">\n  ' + "<br>\n  ".join(header_lines) + "\n</h1>\n"
     except FileNotFoundError:
-        log(f"UWAGA: Plik {csv_filename} nie istnieje. Pomijanie nagłówka.")
+        log(f"NOTE: File {csv_filename} do not exist. Skipping header.")
 
     return ""
 
 def insert_style_and_h1(html_filename, style_content, header_text):
     #Wstawia zawartość style.tpl i nagłówek H1 po </style> w pliku HTML.
-    log(f"Edytowanie pliku HTML: {html_filename}")
+    log(f"Editing an HTML file: {html_filename}.")
 
     path = os.path.join(DATA_DIR, html_filename)
 
@@ -110,7 +110,7 @@ def insert_style_and_h1(html_filename, style_content, header_text):
         with open(path, 'r', encoding='utf-8') as file:
             html_content = file.read()
     except FileNotFoundError:
-        log(f"UWAGA: Plik {html_filename} nie istnieje. Pomijanie operacji.")
+        log(f""NOTE: File {html_filename} nie istnieje. Pomijanie operacji.")
         return
 
     pos = html_content.rfind("</style>")
@@ -121,11 +121,11 @@ def insert_style_and_h1(html_filename, style_content, header_text):
 
     with open(path, 'w', encoding='utf-8') as file:
         file.write(updated_html)
-    log(f"Zaktualizowano plik: {html_filename}")
+    log(f"Updated file: {html_filename}.")
 
 def save_to_file(output_filename, data):
     #Zapisuje przetworzone dane do pliku HTML.
-    log(f"Zapisywanie pliku wynikowego: {output_filename}")
+    log(f"Saving output file: {output_filename}")
 
     header = load_template("header.tpl")
     footer = load_template("footer.tpl")
@@ -144,7 +144,7 @@ def save_to_file(output_filename, data):
 
 def filter_file(input_filename, output_filename, remove_list_filename):
     #Filtruje linie w pliku HTML na podstawie toRemove.tpl.
-    log(f"Filtrowanie pliku: {input_filename}")
+    log(f"Filtering {input_filename} file.")
 
     input_path = os.path.join(DATA_DIR, input_filename)
     output_path = os.path.join(DATA_DIR, output_filename)
@@ -154,7 +154,7 @@ def filter_file(input_filename, output_filename, remove_list_filename):
         with open(remove_list_path, 'r', encoding='utf-8') as remove_file:
             remove_lines = [line.strip() for line in remove_file.readlines()]
     except FileNotFoundError:
-        log(f"UWAGA: Plik {remove_list_filename} nie istnieje. Pomijanie filtrowania.")
+        log(f"NOTE: File {remove_list_filename} does not exist. Skipping filtering.")
         return
 
     with open(input_path, 'r', encoding='utf-8') as infile:
@@ -223,14 +223,14 @@ def remove_temps (filename,second_filename):
 
 def how_to_use():
     print('Usage:')
-    print('>gs [omitted_lines] >> no dirs, output >> _shopify.html')
-    print('>gs [omitted_lines] [csv] >> no dirs, output spec >> [csv].html')
+    #print('>gs [omitted_lines] >> no dirs, output >> _shopify.html')
+    #print('>gs [omitted_lines] [csv] >> no dirs, output spec >> [csv].html')
     print('>gs >> when dirs; header a single line, output: _shopify.html in dirs')
 
 
 #hidden.py import BEGIN
 def load_hidden_values(filename):
-    """Wczytuje wartości do ukrycia z pliku hidden.tpl."""
+    #Wczytuje wartości do ukrycia z pliku hidden.tpl.
     path = os.path.join("conf", filename)
     try:
         with open(path, "r", encoding="utf-8") as file:
