@@ -80,7 +80,7 @@ def load_template(filename):
         with open(path, 'r', encoding='utf-8') as file:
             return file.read()
     except FileNotFoundError:
-        log(f"NOTE: File {filename} do not exist.")
+        log(f"NOTE: File {filename} doesn't exist.")
         return ""
 
 def extract_header_text(csv_filename, omitted_lines):
@@ -96,7 +96,7 @@ def extract_header_text(csv_filename, omitted_lines):
             if header_lines:
                 return '<h1 class="naglowek">\n  ' + "<br>\n  ".join(header_lines) + "\n</h1>\n"
     except FileNotFoundError:
-        log(f"NOTE: File {csv_filename} do not exist. Skipping header.")
+        log(f"NOTE: File {csv_filename} doesn't exist. Skipping header.")
 
     return ""
 
@@ -165,11 +165,11 @@ def filter_file(input_filename, output_filename, remove_list_filename):
     with open(output_path, 'w', encoding='utf-8') as outfile:
         outfile.writelines(filtered_lines)
 
-    log(f"Zapisano przefiltrowany plik: {output_filename}")
+    log(f"Filtered file saved: {output_filename}")
 
 def merge_html_files(description_file, specs_file, final_output_file):
     #Łączy plik opisu i specyfikacji w finalny plik HTML.S
-    log(f"Laczenie plików: {description_file} + {specs_file} → {final_output_file}")
+    log(f"Linking files: {description_file} + {specs_file} → {final_output_file}")
 
     desc_path = os.path.join(DATA_DIR, description_file)
     specs_path = os.path.join(DATA_DIR, specs_file)
@@ -179,20 +179,20 @@ def merge_html_files(description_file, specs_file, final_output_file):
         with open(desc_path, 'r', encoding='utf-8') as desc_file:
             description_content = desc_file.read()
     except FileNotFoundError:
-        log(f"UWAGA: Plik {description_file} nie istnieje. Pomijanie laczenia.")
+        log(f"NOTE: The file {description_file} does not exist. Omitting connecting files.")
         return
 
     try:
         with open(specs_path, 'r', encoding='utf-8') as specs_file:
             specs_content = specs_file.read()
     except FileNotFoundError:
-        log(f"UWAGA: Plik {specs_file} nie istnieje. Pomijanie laczenia.")
+        log(f"NOTE: The file {description_file} does not exist. Omitting connecting files.")
         return
 
     with open(final_path, 'w', encoding='utf-8') as final_file:
         final_file.write(description_content + "\n" + specs_content)
 
-    log(f"Wygenerowano plik zlaczony: {final_output_file}")
+    log(f"A merged file: {final_output_file} was generated.")
 
 def find_single_file(directory, extension):
     #Skanuje katalog w poszukiwaniu plików o podanym rozszerzeniu.
@@ -206,7 +206,7 @@ def find_single_file(directory, extension):
     elif extension == ".html" and len(files) == 0:
         with io.open(os.path.join(directory, 'no_desc.html'), 'w', encoding='utf-8') as file:
             file.write('')
-        log(f"Stworzono pusty plik opisu, gdyz takowego brakowalo")
+        log(f"Created an empty description file when there was none.")
         return 'no_desc'
     return False
 
@@ -225,7 +225,7 @@ def how_to_use():
     print('Usage:')
     #print('>gs [omitted_lines] >> no dirs, output >> _shopify.html')
     #print('>gs [omitted_lines] [csv] >> no dirs, output spec >> [csv].html')
-    print('>gs >> when dirs; header a single line, output: _shopify.html in dirs')
+    print('>gs; header in a single line; output: _shopify.html in dirs')
 
 
 #hidden.py import BEGIN
@@ -236,7 +236,7 @@ def load_hidden_values(filename):
         with open(path, "r", encoding="utf-8") as file:
             return {line.strip() for line in file if line.strip()}
     except FileNotFoundError:
-        log(f"UWAGA: Plik {filename} nie istnieje.")
+        log(f"NOTE: File {filename} doesn't exist.")
         return set()
 
 
@@ -258,7 +258,7 @@ def modify_html(input_filename, output_filename, hidden_values):
         with open(input_path, "r", encoding="utf-8") as file:
             html_content = file.read()
     except FileNotFoundError:
-        log(f"UWAGA: Plik {input_filename} nie istnieje.")
+        log(f"NOTE: File {input_filename} doesn't exist.")
         return
     
     updated_html = re.sub(
@@ -271,7 +271,7 @@ def modify_html(input_filename, output_filename, hidden_values):
     with open(output_path, "w", encoding="utf-8") as file:
         file.write(updated_html)
     
-    log(f"Zapisano przefiltrowany plik finalny: {output_filename}")
+    log(f"Saved filtered final file: {output_filename}")
 #hidden.py import END
 
 
@@ -286,11 +286,11 @@ def main(omitted_lines = False, katalog = False):
     if len(sys.argv) == 2 or katalog:
         filename = find_single_file(DATA_DIR, ".csv")
         if filename == False:
-            log ("Nieprawidlowa ilosc plików .csv w katalogu: " + DATA_DIR)
+            log ("Incorrect number of .csv files in directory: " + DATA_DIR)
             return
         second_filename = find_single_file(DATA_DIR, ".html")
         if second_filename == False:
-            log ("Nieprawidlowa ilosc plików .html w katalogu:" + DATA_DIR)
+            log ("Incorrect number of .html files in directory:" + DATA_DIR)
             return
     if len(sys.argv) == 3:
         filename = sys.argv[2]
@@ -325,7 +325,7 @@ if len(sys.argv) > 1:
     try:
         omittedLines = int(sys.argv[1])
     except ValueError:
-        log(f"BŁĄD: '{sys.argv[1]}' nie jest liczbą całkowitą!")
+        log(f"ERROR: '{sys.argv[1]}' isn't an integer.")
         how_to_use()
         sys.exit(1)
 
@@ -333,14 +333,14 @@ katalogi = list_directories(DATA_DIR)
 if __name__ == "__main__":
     if katalogi:  # Jeśli lista ma elementy, wykonujemy pętlę dla każdego elementu
         for katalog in katalogi:
-            log(f"\nPRZETWARZAM PRODUKT: {katalog}")
+            log(f"\nPROCESSING PRODUCT: {katalog}")
             temp = DATA_DIR
             main(1, katalog)
             DATA_DIR = temp
     else:  # Jeśli lista jest pusta lub False, wykonujemy tylko raz
         if len(sys.argv) == 1:
-            log ('Brak pomijanych linii.')
+            log ('No linnes to be omitted.')
             how_to_use()
             sys.exit(1)
-        log(f"PRZETWARZAM POJEDYNCZY PRODUKT:")
+        log(f"PROCESSING SINGLE PRODUCT:")
         main (omittedLines, katalogi)
