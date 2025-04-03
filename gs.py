@@ -110,7 +110,7 @@ def insert_style_and_h1(html_filename, style_content, header_text):
         with open(path, 'r', encoding='utf-8') as file:
             html_content = file.read()
     except FileNotFoundError:
-        log(f""NOTE: File {html_filename} nie istnieje. Pomijanie operacji.")
+        log(f"NOTE: File {html_filename} nie istnieje. Pomijanie operacji.")
         return
 
     pos = html_content.rfind("</style>")
@@ -225,7 +225,7 @@ def how_to_use():
     print('Usage:')
     #print('>gs [omitted_lines] >> no dirs, output >> _shopify.html')
     #print('>gs [omitted_lines] [csv] >> no dirs, output spec >> [csv].html')
-    print('>gs; header in a single line; output: _shopify.html in dirs')
+    print("gs.exe\nHeader in a single spec line.\nDirs /conf & /data MUST be present & correctly populated.\nOutput: _shopify.html in product's directory")
 
 
 #hidden.py import BEGIN
@@ -290,7 +290,7 @@ def main(omitted_lines = False, katalog = False):
             return
         second_filename = find_single_file(DATA_DIR, ".html")
         if second_filename == False:
-            log ("Incorrect number of .html files in directory:" + DATA_DIR)
+            log ("Incorrect number of .html files in directory: " + DATA_DIR)
             return
     if len(sys.argv) == 3:
         filename = sys.argv[2]
